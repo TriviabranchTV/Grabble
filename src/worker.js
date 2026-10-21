@@ -34,7 +34,7 @@ export default { async fetch(request, env) {
     let x = {}; try { x = await request.json(); } catch {}
     if (x.protocol !== 'tbtv-session-v1' || x.gameId !== 'grabble' || !x.sessionId || !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/.test(String(x.sessionCode || '')) || !x.launchId || !Array.isArray(x.players)) return Response.json({ error: 'INVALID_SESSION_HANDOFF' }, { status: 400 });
     const code = Math.random().toString(36).slice(2, 6).toUpperCase();
-    const players = x.players.map(p => ({ id: String(p.sessionPlayerId), playerToken: crypto.randomUUID() + crypto.randomUUID(), name: String(p.displayName || 'Player').slice(0,18), avatar: p.avatar || null, word: '', wordTiles: [], score: 0, totalScore: 0 }));
+    const players = x.players.map(p => ({ id: String(p.sessionPlayerId), name: String(p.displayName || 'Player').slice(0,18), avatar: p.avatar || null, word: '', wordTiles: [], score: 0, totalScore: 0 }));
     const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
     const init = await stub.fetch('https://room/init', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, mode: 'single', creationContext: 'tv', session: { sessionId: x.sessionId, sessionCode: x.sessionCode, gameId: 'grabble', launchId: x.launchId }, players }) });
     if (!init.ok) return Response.json({ error: 'ROOM_INIT_FAILED' }, { status: 500 });
