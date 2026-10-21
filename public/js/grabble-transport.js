@@ -51,7 +51,9 @@
         encodeURIComponent(name || "") +
         "&playerToken=" +
         encodeURIComponent(playerToken) +
-        "&sessionPlayerId=" +\n        encodeURIComponent(sessionPlayerId) +\n        "&controlToken=" +
+        "&sessionPlayerId=" +
+        encodeURIComponent(sessionPlayerId) +
+        "&controlToken=" +
         encodeURIComponent(controlToken),
     );
     socket.onopen = () => {
