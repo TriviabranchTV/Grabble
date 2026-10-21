@@ -27,13 +27,12 @@
     connection = { role, name };
     const code = config.code || "",
       mode = config.mode || "play";
-    const playerToken =
-      role === "play" ? localStorage.getItem("grabble-player-token:" + config.code) || "" : "";
+    const query = new URLSearchParams(location.search);\n    const playerToken =\n      role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";\n    const queryControlToken = query.get("controlToken") || "";\n    if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
     const controlToken =
       role === "tv"
-        ? localStorage.getItem("grabble-tv-token:" + config.code) || ""
+        ? (queryControlToken || localStorage.getItem("grabble-tv-token:" + config.code) || "")
         : role === "host"
-          ? localStorage.getItem("grabble-host-token:" + config.code) || ""
+          ? (queryControlToken || localStorage.getItem("grabble-host-token:" + config.code) || "")
           : "";
     socket = new WebSocket(
       (location.protocol === "https:" ? "wss" : "ws") +
@@ -74,7 +73,7 @@
         send({ type: "sync" });
       if (Number.isFinite(sequence) && sequence > lastSeq) lastSeq = sequence;
       if (message.type === "authenticated") config.onAuthenticated?.(message.payload || {}, (message.payload || {}).role);
-      if (["ack", "error", "state_changed", "phase_changed", "player_joined", "player_left", "timer_started", "timer_updated", "score_updated", "finished", "room_closed"].includes(message.type))
+      if (["ack", "error", "state_changed", "phase_changed", "player_joined", "player_left", "timer_started", "timer_updated", "score_updated", "finished", "room_closed", "session_returned"].includes(message.type))
         config.onEvent?.({ ...message, ...(message.payload || {}) });
       if (message.type === "left") {
         config.onLeft?.();
