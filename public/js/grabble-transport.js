@@ -28,10 +28,11 @@
     const code = config.code || "",
       mode = config.mode || "play";
     const query = new URLSearchParams(location.search);
+    const coreSession = query.get("core") === "1";
     const playerToken =
-      role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";
+      role === "play" ? (coreSession ? "" : (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "")) : "";
     const queryControlToken = query.get("controlToken") || "";
-    const sessionPlayerId = query.get("sessionPlayerId") || "", coreSession = query.get("core") === "1";
+    const sessionPlayerId = query.get("sessionPlayerId") || "";
     if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
     const controlToken =
       role === "tv"
