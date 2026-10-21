@@ -27,7 +27,11 @@
     connection = { role, name };
     const code = config.code || "",
       mode = config.mode || "play";
-    const query = new URLSearchParams(location.search);\n    const playerToken =\n      role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";\n    const queryControlToken = query.get("controlToken") || "";\n    if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
+    const query = new URLSearchParams(location.search);
+    const playerToken =
+      role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";
+    const queryControlToken = query.get("controlToken") || "";
+    if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
     const controlToken =
       role === "tv"
         ? (queryControlToken || localStorage.getItem("grabble-tv-token:" + config.code) || "")
@@ -62,7 +66,8 @@
       } catch {
         return;
       }
-      if (message.type === "session_returned") { const code = message.payload?.sessionCode || message.sessionCode; if (code) location.href = "https://tv.triviabranch.com/" + (role === "tv" ? "tv/" : "join/") + encodeURIComponent(code); return; }\n      if (message.type === "hello") {
+      if (message.type === "session_returned") { const code = message.payload?.sessionCode || message.sessionCode; if (code) location.href = "https://tv.triviabranch.com/" + (role === "tv" ? "tv/" : "join/") + encodeURIComponent(code); return; }
+      if (message.type === "hello") {
         const hello = message.payload || message;
         config.onHello?.({ ...message, ...hello }, role);
         if (role === "play" && hello.playerToken)
