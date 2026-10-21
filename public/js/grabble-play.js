@@ -86,6 +86,13 @@
     }
   };
   const boot = () => {
+    const query = new URLSearchParams(location.search);
+    if (query.get("playerToken")) {
+      localStorage.setItem("grabble-player-token:" + s.code, query.get("playerToken"));
+      localStorage.setItem("grabble-name:" + s.code, query.get("name") || "Player");
+      s.connect("play", query.get("name") || "Player", (next) => render(next));
+      return;
+    }
     if (!s.code) return window.GrabbleCreate.home();
     let pending = null;
     try { pending = JSON.parse(localStorage.getItem("grabble-pending-join") || "null"); } catch {}
