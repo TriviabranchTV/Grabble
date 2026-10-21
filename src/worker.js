@@ -32,7 +32,7 @@ export default { async fetch(request, env) {
   }
   if (p[0] === 'api' && p[1] === 'create' && request.method === 'POST') {
     let x = {}; try { x = await request.json(); } catch {}
-    if (x.gameId !== 'grabble' || x.contractVersion !== '1.39' || !['host', 'tv'].includes(x.creationContext) || (x.creationContext === 'host' && !String(x.hostPlayer?.displayName || '').trim())) return Response.json({ error: 'Invalid TBLive 1.39 create request.' }, { status: 400 });
+    if (x.gameId !== 'grabble' || !['host', 'tv'].includes(x.creationContext) || (x.creationContext === 'host' && !String(x.hostPlayer?.displayName || '').trim())) return Response.json({ error: 'Invalid create request.' }, { status: 400 });
     try { return Response.json(await makeRoom(env, x.creationContext, x.config || {}, x.hostPlayer, u.origin)); }
     catch (error) { return Response.json({ error: 'Unable to create the room right now.', detail: String(error?.message || error) }, { status: 500 }); }
   }
