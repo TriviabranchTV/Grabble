@@ -31,11 +31,11 @@
     const playerToken =
       role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";
     const queryControlToken = query.get("controlToken") || "";
-    const sessionPlayerId = query.get("sessionPlayerId") || "";
+    const sessionPlayerId = query.get("sessionPlayerId") || "", coreSession = query.get("core") === "1";
     if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
     const controlToken =
       role === "tv"
-        ? (queryControlToken || localStorage.getItem("grabble-tv-token:" + config.code) || "")
+        ? (coreSession ? "" : (queryControlToken || localStorage.getItem("grabble-tv-token:" + config.code) || ""))
         : role === "host"
           ? (queryControlToken || localStorage.getItem("grabble-host-token:" + config.code) || "")
           : "";
