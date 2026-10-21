@@ -49,12 +49,9 @@
         role +
         "&name=" +
         encodeURIComponent(name || "") +
-        "&playerToken=" +
-        encodeURIComponent(playerToken) +
-        "&sessionPlayerId=" +
-        encodeURIComponent(sessionPlayerId) +
-        "&controlToken=" +
-        encodeURIComponent(controlToken),
+        (playerToken ? "&playerToken=" + encodeURIComponent(playerToken) : "") +
+        (sessionPlayerId ? "&sessionPlayerId=" + encodeURIComponent(sessionPlayerId) : "") +
+        (controlToken ? "&controlToken=" + encodeURIComponent(controlToken) : ""),
     );
     socket.onopen = () => {
       if (queuedAction) {
