@@ -1,4 +1,4 @@
-name: TBLive conformance
+name: TBTV conformance
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: tblive-conformance-${{ github.workflow }}-${{ github.ref }}
+  group: tbtv-conformance-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,8 +19,9 @@ jobs:
         with:
           node-version: 20
       - run: node tests/conformance/html-surfaces.mjs
-      - run: node tests/conformance/tblive-1.38.mjs
-      - run: node tests/conformance/persistence-1.38.mjs
+      - run: node tests/conformance/tbtv-contract.mjs
+      - run: node tests/conformance/tbtv-session-1.52.mjs
+      - run: node tests/conformance/room-persistence.mjs
 
   browser-flow:
     needs: static-surfaces

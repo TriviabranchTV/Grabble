@@ -1,51 +1,15 @@
 # Grabble
 
-A TBLive 1.38 word-building game. The consumed contract version is declared in `tblive.capabilities.json` and on each canonical surface.
+Grabble is a TV led TBTV game with phone play. Its shared session compatibility is described in `tbtv.capabilities.json` and the page shells.
 
-Players continuously drag moving letter tokens from a shared pool into the next slot on their own word line. Grabble uses `/play/[CODE]`, `/display/[CODE]`, `/tv/[CODE]`, `/host/[CODE]` and `/admin`, with transient Durable Object room state and no D1/R2 dependency.
+Core starts Grabble through `POST /api/tbtv/session/start`, passing the session ID, session code, launch ID, and player roster. Grabble opens one room per launch, keeps session player IDs stable, and returns the TV and player destinations. Repeating the same launch reuses its room. At the TV’s return point, Grabble sends the session and launch IDs to Core and closes the game room.
 
-## Surface architecture
+The handoff uses no shared secret, signing key, or per player grant. Session and player IDs are context, not credentials. Grabble checks that session players are on the room roster. Standalone play remains available through the game’s own entry flow.
 
-Grabble is the first game migrated to the TBLive HTML-per-surface implementation pattern.
+## Surfaces
 
-Each canonical browser surface has its own static HTML shell, including the explicit home shell:
+Each page has a separate static HTML shell, stylesheet, and controller under `public/surfaces`, `public/css`, and `public/js`. The TV surface owns the session lobby, countdown, live board, results, and return action. The player surface handles standalone joining and phone gameplay. `src/worker.js` routes requests; `src/room.js` owns transient room state.
 
-- `public/surfaces/home.html`
-- `public/surfaces/play.html`
-- `public/surfaces/display.html`
-- `public/surfaces/tv.html`
-- `public/surfaces/host.html`
-- `public/surfaces/admin.html`
+## Checks
 
-Each shell contains its own static header and content mount, then loads its own controller. Shared JavaScript is limited to transport and small browser primitives:
-
-- `public/js/grabble-surface.js`
-- `public/js/grabble-room-common.js`
-- `public/css/grabble-base.css` and the matching `public/css/grabble-[surface].css`
-
-The presentation monolith `public/js/grabble-client.js` and all-surface stylesheet have been removed. Each static shell loads small shared primitives and its own surface stylesheet.
-
-The Worker maps the clean TBLive routes to these shells. The public routes remain canonical and must not expose `.html` URLs or route fallbacks.
-
-The Worker has explicit mappings for `/`, `/play/[CODE]`, `/display/[CODE]`, `/tv/[CODE]`, `/host/[CODE]` and `/admin`. Unknown paths return 404; they never fall back to the player surface.
-
-The migration preserves the existing Durable Object room, WebSocket messages, server-issued player reconnect tokens, lifecycle and scoring behaviour. The central room registry contract is also exposed through `/api/admin/rooms`, `/api/admin/games`, `/api/tblive/rooms/[CODE]/kill` and the admin kill-all path, so the standalone Grabble Worker can be controlled by the central TBLive Admin without inventing another room model. Registry registration is advisory to room creation; a registry outage must never prevent a game from opening.
-
-## Fire TV and browser compatibility
-
-The `/tv/[CODE]` shell is a genuine TV surface, not an alias for `/display/[CODE]`. It is tested separately for:
-
-- Fire TV/Silk loading and reconnect;
-- remote focus and Enter/Space activation;
-- fixed viewport/no-scroll behaviour;
-- QR lobby and live player presence;
-- server-controlled countdown and progression;
-- results and return/play-again actions.
-
-All QR-bearing surfaces use the local canonical TBLive QR module and target `/play/[CODE]`; no third-party QR service is used. A surface migration is not complete until the affected surface passes the TBLive conformance checks and the relevant device/browser smoke tests.
-
-The dictionary is intentionally configurable through the game adapter and cached by the admin Durable Object before public play. Game-specific diagnostics remain an adapter capability; the production operational surface is the central TBLive Admin.
-
-## Contract enforcement
-
-The static surface contract is checked in CI with `node tests/conformance/html-surfaces.mjs`. This verifies that all canonical shells exist, load external assets, remain distinct where required, that the Worker exposes the room registry contract and that unknown routes do not fall back. Device-level checks for Fire TV/Silk, HDMI display and mobile play remain merge/release gates documented in `docs/HTML-PER-SURFACE-MIGRATION.md`.
+Run `node tests/conformance/html-surfaces.mjs`, `node tests/conformance/tbtv-contract.mjs`, `node tests/conformance/tbtv-session-1.52.mjs`, and `node tests/conformance/room-persistence.mjs`. The browser-flow test covers standalone play. Manual TV and phone checks are useful but are not release gates under the current TBTV contract.

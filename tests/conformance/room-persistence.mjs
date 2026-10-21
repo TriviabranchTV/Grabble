@@ -34,7 +34,7 @@ assert.equal(writes, afterInit + 1, 'a meaningful lifecycle transition must pers
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
 assert.equal(writes, afterInit + 1, 'repeated transport snapshots must remain write-free');
 
-console.log('TBLive 1.38 bounded-write room-flow conformance passed');
+console.log('Grabble bounded-write room-flow checks passed');
 
 let hostSnapshot = null;
 const hostRoom = new GrabbleRoom({ storage: {
@@ -53,4 +53,4 @@ assert.equal(createdState.players.length, 1, 'host must be present in the first 
 assert.equal(createdState.players[0].name, 'Ash');
 assert.equal(createdState.players[0].isHost, true);
 assert.equal(createdState.ownerId, 'host-player');
-console.log('TBLive 1.38 host creation registers the host as the first player');
+console.log('Standalone host creation registers its host as the first player');

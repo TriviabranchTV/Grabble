@@ -28,18 +28,13 @@
     const code = config.code || "",
       mode = config.mode || "play";
     const query = new URLSearchParams(location.search);
-    const coreSession = query.get("core") === "1";
-    const playerToken =
-      role === "play" ? (coreSession ? "" : (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "")) : "";
-    const queryControlToken = query.get("controlToken") || "";
-    const sessionPlayerId = query.get("sessionPlayerId") || "";
-    if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
-    const controlToken =
-      role === "tv"
-        ? (coreSession ? "" : (queryControlToken || localStorage.getItem("grabble-tv-token:" + config.code) || ""))
-        : role === "host"
-          ? (queryControlToken || localStorage.getItem("grabble-host-token:" + config.code) || "")
-          : "";
+    const coreSession = query.get("core") === "1" || query.has("session");
+    const playerToken = role === "play" && !coreSession && !config.sessionPlayerId
+      ? (localStorage.getItem("grabble-player-token:" + config.code) || "") : "";
+    const sessionPlayerId = role === "play" ? config.sessionPlayerId || query.get("sessionPlayerId") || "" : "";
+    const controlToken = role === "tv" && !coreSession
+      ? (localStorage.getItem("grabble-tv-token:" + config.code) || "")
+      : role === "host" ? (localStorage.getItem("grabble-host-token:" + config.code) || "") : "";
     socket = new WebSocket(
       (location.protocol === "https:" ? "wss" : "ws") +
         "://" +
@@ -67,7 +62,11 @@
       } catch {
         return;
       }
-      if (message.type === "session_returned") { const code = message.payload?.sessionCode || message.sessionCode; if (code) location.href = "https://tv.triviabranch.com/" + (role === "tv" ? "tv/" : "join/") + encodeURIComponent(code); return; }
+      if (message.type === "return_to_session") {
+        const code = message.payload?.sessionCode || message.sessionCode || config.sessionCode;
+        if (code) location.href = "https://tv.triviabranch.com/" + (role === "tv" ? "tv/" : "join/") + encodeURIComponent(code);
+        return;
+      }
       if (message.type === "hello") {
         const hello = message.payload || message;
         config.onHello?.({ ...message, ...hello }, role);
@@ -79,7 +78,7 @@
         send({ type: "sync" });
       if (Number.isFinite(sequence) && sequence > lastSeq) lastSeq = sequence;
       if (message.type === "authenticated") config.onAuthenticated?.(message.payload || {}, (message.payload || {}).role);
-      if (["ack", "error", "state_changed", "phase_changed", "player_joined", "player_left", "timer_started", "timer_updated", "score_updated", "finished", "room_closed", "session_returned"].includes(message.type))
+      if (["ack", "error", "state_changed", "phase_changed", "player_joined", "player_left", "timer_started", "timer_updated", "score_updated", "finished", "room_closed", "return_to_session"].includes(message.type))
         config.onEvent?.({ ...message, ...(message.payload || {}) });
       if (message.type === "left") {
         config.onLeft?.();

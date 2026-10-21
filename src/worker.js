@@ -1,5 +1,62 @@
 import { registryCall } from './shared.js';
 
+const cleanName = value => String(value || '').trim().replace(/[<>]/g, '').slice(0, 24);
+const cleanAvatar = value => {
+  if (typeof value === 'string') return value.slice(0, 32) || '🎲';
+  if (value && typeof value === 'object' && ['emoji', 'preset', 'photo'].includes(value.type)) {
+    return value.type === 'photo'
+      ? { type: 'photo', key: String(value.key || '').slice(0, 160) }
+      : { type: value.type, value: String(value.value || '').slice(0, 160) };
+  }
+  return '🎲';
+};
+
+async function sessionRoomCode(sessionId, launchId) {
+  const input = new TextEncoder().encode(String(sessionId) + '\0' + String(launchId));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', input));
+  return 'S' + [...digest.slice(0, 12)].map(byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+async function startSessionGame(request, env, origin) {
+  const raw = await request.text();
+  if (raw.length > 65536) return Response.json({ error: 'Session handoff is too large.' }, { status: 413 });
+  let handoff; try { handoff = JSON.parse(raw); } catch { handoff = null; }
+  if (!handoff || handoff.protocol !== 'tbtv-session-v1' || handoff.gameId !== 'grabble' ||
+      typeof handoff.sessionId !== 'string' || !handoff.sessionId.trim() || handoff.sessionId.length > 200 ||
+      typeof handoff.sessionCode !== 'string' || !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/.test(handoff.sessionCode) ||
+      typeof handoff.launchId !== 'string' || !handoff.launchId.trim() || handoff.launchId.length > 200 ||
+      !Array.isArray(handoff.players) || !handoff.players.length || handoff.players.length > 64) {
+    return Response.json({ error: 'Invalid TBTV session handoff.' }, { status: 400 });
+  }
+  const players = [], ids = new Set();
+  for (const item of handoff.players) {
+    const sessionPlayerId = String(item?.sessionPlayerId || '').trim();
+    const displayName = cleanName(item?.displayName);
+    if (!sessionPlayerId || sessionPlayerId.length > 200 || !displayName || ids.has(sessionPlayerId)) {
+      return Response.json({ error: 'The session roster contains an invalid player.' }, { status: 400 });
+    }
+    ids.add(sessionPlayerId);
+    players.push({ sessionPlayerId, name: displayName, avatar: cleanAvatar(item?.avatar) });
+  }
+  const code = await sessionRoomCode(handoff.sessionId, handoff.launchId);
+  const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+  const init = await stub.fetch('https://room/init', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code, mode: 'single', creationContext: 'session', sessionId: handoff.sessionId, sessionCode: handoff.sessionCode, launchId: handoff.launchId, players })
+  });
+  if (!init.ok) return Response.json({ error: 'Could not open the Grabble room.' }, { status: 503 });
+  await env.ADMIN.get(env.ADMIN.idFromName('global')).fetch('https://admin/register', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code, gameId: 'grabble', gameName: 'Grabble', mode: 'single', phase: 'lobby', players: players.length, createdAt: Date.now(), sessionId: handoff.sessionId, launchId: handoff.launchId })
+  }).catch(() => null);
+  const base = origin.replace(/\/$/, '');
+  return Response.json({
+    roomCode: code,
+    tvUrl: base + '/tv/' + code + '?session=' + encodeURIComponent(handoff.sessionCode),
+    players: players.map(player => ({ sessionPlayerId: player.sessionPlayerId, url: base + '/play/' + code + '?session=' + encodeURIComponent(handoff.sessionCode) + '&sessionPlayerId=' + encodeURIComponent(player.sessionPlayerId) }))
+  });
+}
+
 async function makeRoom(env, creationContext, config, hostPlayer, baseUrl) {
   const mode = config.mode === 'competition' ? 'competition' : 'single';
   const hostName = String(hostPlayer?.displayName || '').trim().slice(0, 18);
@@ -31,16 +88,8 @@ export default { async fetch(request, env) {
     return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/admin/kill', { method: 'POST' });
   }
   if (p[0] === 'api' && p[1] === 'tbtv' && p[2] === 'session' && p[3] === 'start' && request.method === 'POST') {
-    let x = {}; try { x = await request.json(); } catch {}
-    if (x.protocol !== 'tbtv-session-v1' || x.gameId !== 'grabble' || !x.sessionId || !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/.test(String(x.sessionCode || '')) || !x.launchId || !Array.isArray(x.players)) return Response.json({ error: 'INVALID_SESSION_HANDOFF' }, { status: 400 });
-    const code = Math.random().toString(36).slice(2, 6).toUpperCase();
-    const players = x.players.map(p => ({ id: String(p.sessionPlayerId), name: String(p.displayName || 'Player').slice(0,18), avatar: p.avatar || null, word: '', wordTiles: [], score: 0, totalScore: 0 }));
-    const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
-    const init = await stub.fetch('https://room/init', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, mode: 'single', creationContext: 'tv', session: { sessionId: x.sessionId, sessionCode: x.sessionCode, gameId: 'grabble', launchId: x.launchId }, players }) });
-    if (!init.ok) return Response.json({ error: 'ROOM_INIT_FAILED' }, { status: 500 });
-    const origin = u.origin, tvUrl = new URL('/tv/' + code, origin); tvUrl.searchParams.set('core', '1');
-    const playerDestinations = players.map(p => { const dest = new URL('/play/' + code, origin); dest.searchParams.set('name', p.name); dest.searchParams.set('sessionPlayerId', p.id); dest.searchParams.set('core', '1'); return { sessionPlayerId: p.id, url: dest.href }; });
-    return Response.json({ roomCode: code, tvUrl: tvUrl.href, players: playerDestinations });
+    try { return await startSessionGame(request, env, u.origin); }
+    catch (error) { return Response.json({ error: 'Unable to open Grabble.', detail: String(error?.message || error) }, { status: 503 }); }
   }
   if (p[0] === 'api' && p[1] === 'create' && request.method === 'POST') {
     let x = {}; try { x = await request.json(); } catch {}

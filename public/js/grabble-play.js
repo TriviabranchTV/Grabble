@@ -1,5 +1,6 @@
 (function () {
   const s = window.GrabbleSurface;
+  const avatarText = value => typeof value === "string" ? value : value?.value || (value?.type === "photo" ? "📷" : "");
   s.configureCreate();
   window.GrabblePlayer.configure({
     getState: () => s.getState(),
@@ -26,15 +27,15 @@
     document.body.append(modal);
     modal.querySelector("#go").onclick = () => { modal.remove(); after?.(); };
   };
-  const lobby = (state, me) => '<section class="mobile-lobby panel"><div class="mobile-lobby-head"><p class="eyebrow">' + (state.totalRounds > 1 ? "ROUND " + state.round + " OF " + state.totalRounds : "SINGLE GAME") + '</p><h1>Lobby</h1><p class="mobile-room-code">Room <strong>' + s.esc(s.code) + '</strong></p><p class="mobile-player-count">' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p></div><div class="mobile-lobby-players">' + (state.players.length ? state.players.map(p => '<div class="mobile-player"><span class="mobile-player-dot"></span><strong>' + s.esc(p.name) + "</strong>" + (p.id === me ? "<small>YOU</small>" : "") + "</div>").join("") : '<p class="status">Waiting for players</p>') + '</div>' + window.GrabbleRoomCommon.rules().replace("display-rules","mobile-lobby-rules") + '<div class="mobile-lobby-action"><button class="secondary" id="how-to-play">How to play</button>' + ((state.ownerId === me || state.players.length === 1) ? '<button id="start" class="race-start-cta">Start game</button>' : "<button disabled>Waiting for the creator</button>") + "</div></section>";
+  const lobby = (state, me) => '<section class="mobile-lobby panel"><div class="mobile-lobby-head"><p class="eyebrow">' + (state.totalRounds > 1 ? "ROUND " + state.round + " OF " + state.totalRounds : "SINGLE GAME") + '</p><h1>Lobby</h1><p class="mobile-room-code">' + (state.sessionMode ? 'Connected to games night' : 'Room <strong>' + s.esc(s.code) + '</strong>') + '</p><p class="mobile-player-count">' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p></div><div class="mobile-lobby-players">' + (state.players.length ? state.players.map(p => '<div class="mobile-player"><span class="mobile-player-dot">' + s.esc(avatarText(p.avatar)) + '</span><strong>' + s.esc(p.name) + "</strong>" + (p.id === me ? "<small>YOU</small>" : "") + "</div>").join("") : '<p class="status">Waiting for players</p>') + '</div>' + window.GrabbleRoomCommon.rules().replace("display-rules","mobile-lobby-rules") + '<div class="mobile-lobby-action"><button class="secondary" id="how-to-play">How to play</button>' + ((!state.sessionMode && (state.ownerId === me || state.players.length === 1)) ? '<button id="start" class="race-start-cta">Start game</button>' : "<button disabled>Waiting for the TV</button>") + "</div></section>";
   const playerTiles = (word) => Array.from(word || "").map((letter) => '<span class="player-word-tile">' + s.esc(letter) + "</span>").join("");
   const playerResults = (state, me) => {
     const players = [...(state.players || [])].sort((a,b) => (b.totalScore || 0) - (a.totalScore || 0));
-    const isOwner = state.ownerId === me || players.length === 1;
+    const isOwner = !state.sessionMode && (state.ownerId === me || players.length === 1);
     const action = state.phase === "final"
       ? (isOwner ? '<button id="play-again">Play again</button>' : '<p class="status">Waiting for the creator to play again.</p>')
       : (isOwner ? '<button id="next-round">Next round</button>' : '<p class="status">Waiting for the next round.</p>');
-    return '<section class="player-result-stage"><div class="player-result-heading"><p class="eyebrow">' + (state.phase === "final" ? "GAME COMPLETE" : "TIME’S UP") + '</p><h1>' + (state.phase === "final" ? "Final leaderboard" : "Round complete") + '</h1></div><div class="player-result-cards">' + players.map((p, i) => '<article class="player-result-card"><div class="player-result-card-head"><strong>' + (i + 1) + ". " + s.esc(p.name) + (p.id === me ? " · you" : "") + '</strong><span>' + (p.score || 0) + " points</span></div><div class=\"player-result-word\">" + (playerTiles(p.word) || '<span class="word-empty">No word</span>') + '</div><small>' + (p.totalScore || 0) + " total</small></article>").join("") + '</div><div class="player-result-actions">' + action + '<button class="secondary" id="leave-game">Leave game</button></div></section>';
+    return '<section class="player-result-stage"><div class="player-result-heading"><p class="eyebrow">' + (state.phase === "final" ? "GAME COMPLETE" : "TIME’S UP") + '</p><h1>' + (state.phase === "final" ? "Final leaderboard" : "Round complete") + '</h1></div><div class="player-result-cards">' + players.map((p, i) => '<article class="player-result-card"><div class="player-result-card-head"><strong>' + (i + 1) + ". " + s.esc(avatarText(p.avatar) ? avatarText(p.avatar) + ' ' : '') + s.esc(p.name) + (p.id === me ? " · you" : "") + '</strong><span>' + (p.score || 0) + " points</span></div><div class=\"player-result-word\">" + (playerTiles(p.word) || '<span class="word-empty">No word</span>') + '</div><small>' + (p.totalScore || 0) + " total</small></article>").join("") + '</div><div class="player-result-actions">' + action + (state.sessionMode ? "" : '<button class="secondary" id="leave-game">Leave game</button>') + '</div></section>';
   };
   const game = (state, me) => {
     const tokens = state.pool || [];
@@ -86,14 +87,12 @@
     }
   };
   const boot = () => {
-    const query = new URLSearchParams(location.search);
-    if (query.get("sessionPlayerId")) {
-      if (query.get("playerToken")) localStorage.setItem("grabble-player-token:" + s.code, query.get("playerToken"));
-      localStorage.setItem("grabble-name:" + s.code, query.get("name") || "Player");
-      s.connect("play", query.get("name") || "Player", (next) => render(next));
+    if (!s.code) return window.GrabbleCreate.home();
+    if (s.sessionPlayerId && s.sessionCode) {
+      s.onEvent = event => { if (event.type === "return_to_session") location.href = "https://tv.triviabranch.com/join/" + encodeURIComponent(event.sessionCode || s.sessionCode); };
+      s.connect("play", "", (next) => render(next));
       return;
     }
-    if (!s.code) return window.GrabbleCreate.home();
     let pending = null;
     try { pending = JSON.parse(localStorage.getItem("grabble-pending-join") || "null"); } catch {}
     if (pending && pending.code === s.code && pending.name) {

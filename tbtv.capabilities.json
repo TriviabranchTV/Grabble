@@ -1,0 +1,12 @@
+{
+  "gameId": "grabble",
+  "contractVersion": "1.52",
+  "handoff": {
+    "protocol": "tbtv-session-v1",
+    "startEndpoint": "/api/tbtv/session/start",
+    "returnEndpoint": "https://tv.triviabranch.com/api/tbtv/session/return",
+    "stablePlayerIds": true,
+    "launchRetryIsIdempotent": true
+  },
+  "standalonePlay": true
+}

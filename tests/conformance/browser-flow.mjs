@@ -22,7 +22,7 @@ try {
   const hostRequest = await hostRequestPromise;
   const hostPayload = hostRequest.postDataJSON();
   assert.equal(hostPayload.creationContext, 'host');
-  assert.equal(hostPayload.contractVersion, '1.39');
+  assert.equal(hostPayload.contractVersion, '1.52');
   assert.deepEqual(hostPayload.hostPlayer, { displayName: 'Ash' });
   await host.waitForURL(url => /^\/host\/[A-Z0-9]{4}$/.test(url.pathname));
   const hostCode = new URL(host.url()).pathname.split('/').pop();
@@ -97,7 +97,7 @@ try {
   await tv.locator('.display-lobby').waitFor({ state: 'visible', timeout: 10000 });
 
   await browser.close();
-  console.log('TBLive 1.39 host, player-join, read-only projection and hostless TV replay browser flow passed');
+  console.log('Grabble standalone create, player join, TV projection and replay browser flow passed');
 } catch (error) {
   await browser.close();
   throw error;

@@ -2,6 +2,9 @@
   const parts = location.pathname.split("/").filter(Boolean);
   const mode = parts[0] || "home";
   const code = parts[1] || "";
+  const params = new URLSearchParams(location.search);
+  const sessionPlayerId = params.get("sessionPlayerId") || "";
+  const sessionCode = params.get("session") || "";
   let state = null;
   let me = null;
   let connectionRole = null;
@@ -31,6 +34,8 @@
   const connect = (role, name, onState) => {
     window.GrabbleTransport.configure({
       code,
+      sessionPlayerId: role === "play" ? sessionPlayerId : "",
+      sessionCode,
       mode,
       getState: () => state,
       isLeaving: () => leaving,
@@ -51,6 +56,7 @@
         localStorage.removeItem("grabble-pending-join");
         location.href = "/";
       },
+      onEvent: (event) => window.GrabbleSurface.onEvent?.(event),
     });
     window.GrabbleTransport.connect(role, name);
   };
@@ -69,7 +75,7 @@
     } else finish();
   };
   window.GrabbleSurface = {
-    mode, code, esc, logo, shell, create, configureCreate, connect, leave,
+    mode, code, sessionPlayerId, sessionCode, esc, logo, shell, create, configureCreate, connect, leave,
     setLeaving: (value = true) => { leaving = value; },
     getState: () => state, getMe: () => me,
     getConnectionRole: () => connectionRole,

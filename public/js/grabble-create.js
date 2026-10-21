@@ -49,7 +49,7 @@
       button.disabled = true;
       button.textContent = "Creating…";
       try {
-        const result = await api.create({ gameId: "grabble", contractVersion: "1.39", creationContext: context, config: { mode: chosen }, hostPlayer: context === "host" ? { displayName: hostName } : undefined });
+        const result = await api.create({ gameId: "grabble", contractVersion: "1.52", creationContext: context, config: { mode: chosen }, hostPlayer: context === "host" ? { displayName: hostName } : undefined });
         if (!result.controlToken) throw new Error("The room was created without its TV or host control token.");
         localStorage.setItem("grabble-" + context + "-token:" + result.code, result.controlToken);
         if (result.playerToken) {
