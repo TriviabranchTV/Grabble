@@ -45,7 +45,8 @@
   let activeState = null;
   window.setInterval(paintClock, 200);
   const bind = (state) => {
-    document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => window.GrabbleTransport.send({type:"configure",mode:button.dataset.mode}), {once:true}));\n    document.querySelector("[data-action=continue-settings]")?.addEventListener("click", () => window.GrabbleTransport.send({type:"continue-settings"}), {once:true});
+    document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => window.GrabbleTransport.send({type:"configure",mode:button.dataset.mode}), {once:true}));
+    document.querySelector("[data-action=continue-settings]")?.addEventListener("click", () => window.GrabbleTransport.send({type:"continue-settings"}), {once:true});
     document.getElementById("start")?.addEventListener("click", () => window.GrabbleTransport.send({type:"start"}), {once:true});
   };
   const render = (state) => {
