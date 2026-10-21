@@ -4,9 +4,12 @@ const cleanName = value => String(value || '').trim().replace(/[<>]/g, '').slice
 const cleanAvatar = value => {
   if (typeof value === 'string') return value.slice(0, 32) || '🎲';
   if (value && typeof value === 'object' && ['emoji', 'preset', 'photo'].includes(value.type)) {
-    return value.type === 'photo'
-      ? { type: 'photo', key: String(value.key || '').slice(0, 160) }
-      : { type: value.type, value: String(value.value || '').slice(0, 160) };
+    if (value.type === 'photo') {
+      const inline = String(value.value || value.dataUrl || value.src || '');
+      return inline.length <= 65536 && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(inline)
+        ? { type: 'photo', value: inline } : '🎲';
+    }
+    return { type: value.type, value: String(value.value || '').slice(0, 160) };
   }
   return '🎲';
 };
@@ -19,7 +22,7 @@ async function sessionRoomCode(sessionId, launchId) {
 
 async function startSessionGame(request, env, origin) {
   const raw = await request.text();
-  if (raw.length > 65536) return Response.json({ error: 'Session handoff is too large.' }, { status: 413 });
+  if (raw.length > 900000) return Response.json({ error: 'Session handoff is too large.' }, { status: 413 });
   let handoff; try { handoff = JSON.parse(raw); } catch { handoff = null; }
   if (!handoff || handoff.protocol !== 'tbtv-session-v1' || handoff.gameId !== 'grabble' ||
       typeof handoff.sessionId !== 'string' || !handoff.sessionId.trim() || handoff.sessionId.length > 200 ||
