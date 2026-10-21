@@ -48,11 +48,11 @@
       return;
     }
     const canControl = state.controllerRole === "tv" && s.getConnectionRole() === "tv";
-    const actions = canControl ? (state.phase === "final" ? '<div class="tv-result-actions"><button id="play-again">Play again</button><button class="secondary" id="return-session">Return to TV lobby</button></div>' : '<div class="tv-result-actions"><button id="start">Next round</button></div>') : "";
+    const actions = canControl ? (state.phase === "final" ? '<div class="tv-result-actions"><button id="play-again">Play again</button><button class="secondary" id="return-session">'+(state.sessionId?"Return to TV lobby":"Back to TriviaBranch TV")+'</button></div>' : '<div class="tv-result-actions"><button id="start">Next round</button></div>') : "";
     s.shell(common.results(state,s.getMe(),actions));
     document.getElementById("start")?.addEventListener("click", () => window.GrabbleTransport.send({type:"next"}), {once:true});
     document.getElementById("play-again")?.addEventListener("click", () => window.GrabbleTransport.send({type:"restart"}), {once:true});
-    document.getElementById("return-session")?.addEventListener("click", () => window.GrabbleTransport.send({type:"return"}), {once:true});
+    document.getElementById("return-session")?.addEventListener("click", () => state.sessionId ? window.GrabbleTransport.send({type:"return"}) : location.href="https://tv.triviabranch.com", {once:true});
   };
   const enter = () => {
     if (!s.code) window.GrabbleCreate.tvHome();
