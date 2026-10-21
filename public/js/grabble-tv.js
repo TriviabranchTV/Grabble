@@ -1,7 +1,14 @@
 (function () {
   const s = window.GrabbleSurface;
   const common = window.GrabbleRoomCommon;
-  const avatarText = value => typeof value === "string" ? value : value?.value || (value?.type === "photo" ? "📷" : "");
+  const avatarMarkup = value => {
+    const raw = typeof value === "string" ? value : value?.value || value?.dataUrl || value?.src || "";
+    const photo = (typeof value === "string" && value.startsWith("data:image/")) || value?.type === "photo" || value?.type === "selfie";
+    if (photo && typeof raw === "string" && raw.length <= 65536 && /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw))
+      return '<img alt="" class="player-avatar-inline" style="width:30px;height:30px;object-fit:cover;border-radius:50%;vertical-align:middle" src="' + s.esc(raw) + '">';
+    const label = typeof value === "string" ? value : value?.value || (photo ? "📷" : "🎲");
+    return '<span class="player-avatar-inline" aria-hidden="true">' + s.esc(label) + '</span>';
+  };
   s.configureCreate();
   document.getElementById("tv-back")?.addEventListener("click", () => {
     s.setLeaving();
@@ -15,9 +22,9 @@
   const lobby = (state) => {
     const canControl = state.controllerRole === "tv" && s.getConnectionRole() === "tv";
     const join = state.sessionMode ? '<aside class="display-qr session-roster"><img class="display-qr-logo" src="/assets/grabble-wordmark.png" alt="Grabble"><p>Games night</p><p>Players joined from the shared lobby</p></aside>' : '<div class="display-qr"><img class="display-qr-logo" src="/assets/grabble-wordmark.png" alt="Grabble"><div class="display-qr-code" data-join-qr></div><p>Scan to join</p><p>Room code <strong>' + s.esc(s.code) + '</strong></p></div>';
-    return '<div class="display-stage"><div class="display-lobby"><div class="display-copy"><p class="eyebrow">' + (state.sessionMode ? 'GRABBLE' : 'ROOM ' + s.esc(s.code)) + '</p><h1>Lobby</h1><p>' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p><div class="display-drawings">' + (state.players.length ? state.players.map(p => '<div class="display-drawing-card pending"><strong>' + s.esc((avatarText(p.avatar) ? avatarText(p.avatar) + ' ' : '') + p.name) + '</strong><span class="player-presence">' + (p.isHost ? 'Host · ready to play' : 'Joined') + '</span></div>').join("") : '<div class="display-drawing-card pending"><strong>Waiting for players</strong><span class="player-presence">Share the QR code to join</span></div>') + '</div>' + common.rules() + '<div class="display-controls">' + (canControl && state.players.length ? '<button id="start" class="race-start-cta">Start game</button>' : "") + '</div></div>' + join + '</div></div>';
+    return '<div class="display-stage"><div class="display-lobby"><div class="display-copy"><p class="eyebrow">' + (state.sessionMode ? 'GRABBLE' : 'ROOM ' + s.esc(s.code)) + '</p><h1>Lobby</h1><p>' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p><div class="display-drawings">' + (state.players.length ? state.players.map(p => '<div class="display-drawing-card pending"><strong>' + avatarMarkup(p.avatar) + ' ' + s.esc(p.name) + '</strong><span class="player-presence">' + (p.isHost ? 'Host · ready to play' : 'Joined') + '</span></div>').join("") : '<div class="display-drawing-card pending"><strong>Waiting for players</strong><span class="player-presence">Share the QR code to join</span></div>') + '</div>' + common.rules() + '<div class="display-controls">' + (canControl && state.players.length ? '<button id="start" class="race-start-cta">Start game</button>' : "") + '</div></div>' + join + '</div></div>';
   };
-  const live = state => `<div class="display-stage"><div class="tv-round-clock" id="tv-round-clock" role="timer" aria-label="Time remaining"></div>${common.pool(state, true)}<div class="corners">${(state.players || []).map(player => `<article class="corner" data-player-id="${s.esc(player.id)}"><div class="display-player-head"><b>${s.esc((avatarText(player.avatar) ? avatarText(player.avatar) + " " : "") + player.name)}</b></div><div class="live-word" aria-label="Selected letters">${player.word ? Array.from(player.word).map(letter => `<i class="live-letter-tile">${s.esc(letter)}</i>`).join("") : '<span class="live-word-empty">Waiting for letters</span>'}</div><small class="player-score-line"><span>${(player.word || "").length} letters · ${player.totalScore || 0} total</span></small></article>`).join("")}</div></div>`;
+  const live = state => `<div class="display-stage"><div class="tv-round-clock" id="tv-round-clock" role="timer" aria-label="Time remaining"></div>${common.pool(state, true)}<div class="corners">${(state.players || []).map(player => `<article class="corner" data-player-id="${s.esc(player.id)}"><div class="display-player-head"><b>${avatarMarkup(player.avatar)} ${s.esc(player.name)}</b></div><div class="live-word" aria-label="Selected letters">${player.word ? Array.from(player.word).map(letter => `<i class="live-letter-tile">${s.esc(letter)}</i>`).join("") : '<span class="live-word-empty">Waiting for letters</span>'}</div><small class="player-score-line"><span>${(player.word || "").length} letters · ${player.totalScore || 0} total</span></small></article>`).join("")}</div></div>`;
   const paintClock = () => {
     const clock = document.getElementById("tv-round-clock");
     if (!clock || !activeState) return;
