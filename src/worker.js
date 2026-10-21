@@ -33,13 +33,13 @@ export default { async fetch(request, env) {
   if (p[0] === 'api' && p[1] === 'tbtv' && p[2] === 'session' && p[3] === 'start' && request.method === 'POST') {
     let x = {}; try { x = await request.json(); } catch {}
     if (x.protocol !== 'tbtv-session-v1' || x.gameId !== 'grabble' || !x.sessionId || !/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/.test(String(x.sessionCode || '')) || !x.launchId || !Array.isArray(x.players)) return Response.json({ error: 'INVALID_SESSION_HANDOFF' }, { status: 400 });
-    const code = Math.random().toString(36).slice(2, 6).toUpperCase(), controlToken = crypto.randomUUID() + crypto.randomUUID();
+    const code = Math.random().toString(36).slice(2, 6).toUpperCase();
     const players = x.players.map(p => ({ id: String(p.sessionPlayerId), playerToken: crypto.randomUUID() + crypto.randomUUID(), name: String(p.displayName || 'Player').slice(0,18), avatar: p.avatar || null, word: '', wordTiles: [], score: 0, totalScore: 0 }));
     const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
-    const init = await stub.fetch('https://room/init', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, mode: 'single', creationContext: 'tv', controlToken, session: { sessionId: x.sessionId, sessionCode: x.sessionCode, gameId: 'grabble', launchId: x.launchId }, players }) });
+    const init = await stub.fetch('https://room/init', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, mode: 'single', creationContext: 'tv', session: { sessionId: x.sessionId, sessionCode: x.sessionCode, gameId: 'grabble', launchId: x.launchId }, players }) });
     if (!init.ok) return Response.json({ error: 'ROOM_INIT_FAILED' }, { status: 500 });
-    const origin = u.origin, tvUrl = new URL('/tv/' + code, origin); tvUrl.searchParams.set('controlToken', controlToken);
-    const playerDestinations = players.map(p => { const dest = new URL('/play/' + code, origin); dest.searchParams.set('playerToken', p.playerToken); dest.searchParams.set('name', p.name); dest.searchParams.set('sessionPlayerId', p.id); return { sessionPlayerId: p.id, url: dest.href }; });
+    const origin = u.origin, tvUrl = new URL('/tv/' + code, origin);
+    const playerDestinations = players.map(p => { const dest = new URL('/play/' + code, origin); dest.searchParams.set('name', p.name); dest.searchParams.set('sessionPlayerId', p.id); return { sessionPlayerId: p.id, url: dest.href }; });
     return Response.json({ roomCode: code, tvUrl: tvUrl.href, players: playerDestinations });
   }
   if (p[0] === 'api' && p[1] === 'create' && request.method === 'POST') {
