@@ -26,7 +26,7 @@ for (const surface of surfaces) {
   const stylesheets = [...source.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(match => match[1]).sort();
   assert.deepEqual(stylesheets, ['/css/grabble-' + surface + '.css', '/css/grabble-base.css'].sort(), file + ' must load only its surface stylesheet and shared primitives');
   await access(path.join(root, 'public/css/grabble-' + surface + '.css'));
-  assert.match(source, new RegExp('src="\/js\/' + controllers[surface] + '"'), file + ' must load its own controller');
+  assert.match(source, new RegExp('src="/js/' + controllers[surface] + '([^"]*)?"'), file + ' must load its own controller');
   assert.doesNotMatch(source, /grabble-client\.js/, file + ' must not load the presentation monolith');
   assert.doesNotMatch(source, /<script>(?!\s*<\/script>)/i, file + ' must not contain inline application code');
   assert.match(source, /tbtv-contract-version" content="1\.52"/, file + ' must declare TBTV 1.52');
