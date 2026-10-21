@@ -62,7 +62,7 @@
       } catch {
         return;
       }
-      if (message.type === "hello") {
+      if (message.type === "session_returned") { const code = message.payload?.sessionCode || message.sessionCode; if (code) location.href = "https://tv.triviabranch.com/" + (role === "tv" ? "tv/" : "join/") + encodeURIComponent(code); return; }\n      if (message.type === "hello") {
         const hello = message.payload || message;
         config.onHello?.({ ...message, ...hello }, role);
         if (role === "play" && hello.playerToken)
