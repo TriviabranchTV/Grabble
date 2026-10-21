@@ -30,7 +30,8 @@
     const query = new URLSearchParams(location.search);
     const playerToken =
       role === "play" ? (query.get("playerToken") || localStorage.getItem("grabble-player-token:" + config.code) || "") : "";
-    const queryControlToken = query.get("controlToken") || "";\n    const sessionPlayerId = query.get("sessionPlayerId") || "";
+    const queryControlToken = query.get("controlToken") || "";
+    const sessionPlayerId = query.get("sessionPlayerId") || "";
     if (role === "play" && playerToken) localStorage.setItem("grabble-player-token:" + config.code, playerToken);
     const controlToken =
       role === "tv"
@@ -50,7 +51,7 @@
         encodeURIComponent(name || "") +
         "&playerToken=" +
         encodeURIComponent(playerToken) +
-        "&controlToken=" +
+        "&sessionPlayerId=" +\n        encodeURIComponent(sessionPlayerId) +\n        "&controlToken=" +
         encodeURIComponent(controlToken),
     );
     socket.onopen = () => {
