@@ -1,6 +1,13 @@
 (function () {
   const s = window.GrabbleSurface;
-  const avatarText = value => typeof value === "string" ? value : value?.value || (value?.type === "photo" ? "📷" : "");
+  const avatarMarkup = value => {
+    const raw = typeof value === "string" ? value : value?.value || value?.dataUrl || value?.src || "";
+    const photo = (typeof value === "string" && value.startsWith("data:image/")) || value?.type === "photo" || value?.type === "selfie";
+    if (photo && typeof raw === "string" && raw.length <= 65536 && /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw))
+      return '<img alt="" class="player-avatar-inline" style="width:30px;height:30px;object-fit:cover;border-radius:50%;vertical-align:middle" src="' + s.esc(raw) + '">';
+    const label = typeof value === "string" ? value : value?.value || (photo ? "📷" : "🎲");
+    return '<span class="player-avatar-inline" aria-hidden="true">' + s.esc(label) + '</span>';
+  };
   s.configureCreate();
   window.GrabblePlayer.configure({
     getState: () => s.getState(),
@@ -27,7 +34,7 @@
     document.body.append(modal);
     modal.querySelector("#go").onclick = () => { modal.remove(); after?.(); };
   };
-  const lobby = (state, me) => '<section class="mobile-lobby panel"><div class="mobile-lobby-head"><p class="eyebrow">' + (state.totalRounds > 1 ? "ROUND " + state.round + " OF " + state.totalRounds : "SINGLE GAME") + '</p><h1>Lobby</h1><p class="mobile-room-code">' + (state.sessionMode ? 'Connected to games night' : 'Room <strong>' + s.esc(s.code) + '</strong>') + '</p><p class="mobile-player-count">' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p></div><div class="mobile-lobby-players">' + (state.players.length ? state.players.map(p => '<div class="mobile-player"><span class="mobile-player-dot">' + s.esc(avatarText(p.avatar)) + '</span><strong>' + s.esc(p.name) + "</strong>" + (p.id === me ? "<small>YOU</small>" : "") + "</div>").join("") : '<p class="status">Waiting for players</p>') + '</div>' + window.GrabbleRoomCommon.rules().replace("display-rules","mobile-lobby-rules") + '<div class="mobile-lobby-action"><button class="secondary" id="how-to-play">How to play</button>' + ((!state.sessionMode && (state.ownerId === me || state.players.length === 1)) ? '<button id="start" class="race-start-cta">Start game</button>' : "<button disabled>Waiting for the TV</button>") + "</div></section>";
+  const lobby = (state, me) => '<section class="mobile-lobby panel"><div class="mobile-lobby-head"><p class="eyebrow">' + (state.totalRounds > 1 ? "ROUND " + state.round + " OF " + state.totalRounds : "SINGLE GAME") + '</p><h1>Lobby</h1><p class="mobile-room-code">' + (state.sessionMode ? 'Connected to games night' : 'Room <strong>' + s.esc(s.code) + '</strong>') + '</p><p class="mobile-player-count">' + state.players.length + " player" + (state.players.length === 1 ? "" : "s") + ' joined</p></div><div class="mobile-lobby-players">' + (state.players.length ? state.players.map(p => '<div class="mobile-player"><span class="mobile-player-dot">' + avatarMarkup(p.avatar) + '</span><strong>' + s.esc(p.name) + "</strong>" + (p.id === me ? "<small>YOU</small>" : "") + "</div>").join("") : '<p class="status">Waiting for players</p>') + '</div>' + window.GrabbleRoomCommon.rules().replace("display-rules","mobile-lobby-rules") + '<div class="mobile-lobby-action"><button class="secondary" id="how-to-play">How to play</button>' + ((!state.sessionMode && (state.ownerId === me || state.players.length === 1)) ? '<button id="start" class="race-start-cta">Start game</button>' : "<button disabled>Waiting for the TV</button>") + "</div></section>";
   const playerTiles = (word) => Array.from(word || "").map((letter) => '<span class="player-word-tile">' + s.esc(letter) + "</span>").join("");
   const playerResults = (state, me) => {
     const players = [...(state.players || [])].sort((a,b) => (b.totalScore || 0) - (a.totalScore || 0));
@@ -35,7 +42,7 @@
     const action = state.phase === "final"
       ? (isOwner ? '<button id="play-again">Play again</button>' : '<p class="status">Waiting for the creator to play again.</p>')
       : (isOwner ? '<button id="next-round">Next round</button>' : '<p class="status">Waiting for the next round.</p>');
-    return '<section class="player-result-stage"><div class="player-result-heading"><p class="eyebrow">' + (state.phase === "final" ? "GAME COMPLETE" : "TIME’S UP") + '</p><h1>' + (state.phase === "final" ? "Final leaderboard" : "Round complete") + '</h1></div><div class="player-result-cards">' + players.map((p, i) => '<article class="player-result-card"><div class="player-result-card-head"><strong>' + (i + 1) + ". " + s.esc(avatarText(p.avatar) ? avatarText(p.avatar) + ' ' : '') + s.esc(p.name) + (p.id === me ? " · you" : "") + '</strong><span>' + (p.score || 0) + " points</span></div><div class=\"player-result-word\">" + (playerTiles(p.word) || '<span class="word-empty">No word</span>') + '</div><small>' + (p.totalScore || 0) + " total</small></article>").join("") + '</div><div class="player-result-actions">' + action + (state.sessionMode ? "" : '<button class="secondary" id="leave-game">Leave game</button>') + '</div></section>';
+    return '<section class="player-result-stage"><div class="player-result-heading"><p class="eyebrow">' + (state.phase === "final" ? "GAME COMPLETE" : "TIME’S UP") + '</p><h1>' + (state.phase === "final" ? "Final leaderboard" : "Round complete") + '</h1></div><div class="player-result-cards">' + players.map((p, i) => '<article class="player-result-card"><div class="player-result-card-head"><strong>' + (i + 1) + ". " + avatarMarkup(p.avatar) + ' ' + s.esc(p.name) + (p.id === me ? " · you" : "") + '</strong><span>' + (p.score || 0) + " points</span></div><div class=\"player-result-word\">" + (playerTiles(p.word) || '<span class="word-empty">No word</span>') + '</div><small>' + (p.totalScore || 0) + " total</small></article>").join("") + '</div><div class="player-result-actions">' + action + (state.sessionMode ? "" : '<button class="secondary" id="leave-game">Leave game</button>') + '</div></section>';
   };
   const game = (state, me) => {
     const tokens = state.pool || [];
