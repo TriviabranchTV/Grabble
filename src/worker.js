@@ -38,7 +38,7 @@ export default { async fetch(request, env) {
     const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
     const init = await stub.fetch('https://room/init', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, mode: 'single', creationContext: 'tv', session: { sessionId: x.sessionId, sessionCode: x.sessionCode, gameId: 'grabble', launchId: x.launchId }, players }) });
     if (!init.ok) return Response.json({ error: 'ROOM_INIT_FAILED' }, { status: 500 });
-    const origin = u.origin, tvUrl = new URL('/tv/' + code, origin);
+    const origin = u.origin, tvUrl = new URL('/tv/' + code, origin); tvUrl.searchParams.set('core', '1');
     const playerDestinations = players.map(p => { const dest = new URL('/play/' + code, origin); dest.searchParams.set('name', p.name); dest.searchParams.set('sessionPlayerId', p.id); return { sessionPlayerId: p.id, url: dest.href }; });
     return Response.json({ roomCode: code, tvUrl: tvUrl.href, players: playerDestinations });
   }
