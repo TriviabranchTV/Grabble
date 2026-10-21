@@ -2,6 +2,7 @@ import { VALUE, id, pool, registryCall } from './shared.js';
 
 const INACTIVITY = 30 * 60 * 1000;
 const ROUND = 30 * 1000;
+const sessionAvatar = value => { const raw = typeof value === 'string' ? value : value && typeof value === 'object' ? (value.value || value.dataUrl || value.src || '') : ''; if (typeof raw === 'string' && raw.length <= 65536 && /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(raw)) return { type: 'photo', value: raw }; if (typeof value === 'string' && !value.startsWith('data:')) return value.slice(0, 16); if (value && typeof value === 'object' && ['emoji','preset'].includes(value.type)) return { type: value.type, value: String(value.value || '🎲').slice(0, 16) }; return '🎲'; };
 
 export class GrabbleRoom {
   constructor(state, env) {
@@ -44,7 +45,7 @@ export class GrabbleRoom {
     if (x.creationContext === 'session' && this.data.sessionMode && this.data.sessionId === x.sessionId && this.data.launchId === x.launchId) return Response.json({ ok: true, roomCode: this.data.code, reused: true });
     if (this.data.code && this.data.phase !== 'closed') return Response.json({ error: 'ROOM_ALREADY_INITIALISED' }, { status: 409 });
     const hostPlayer = x.creationContext === 'host' && x.hostName && x.playerToken ? { id: 'host-player', playerToken: x.playerToken, name: String(x.hostName).slice(0, 24), word: '', wordTiles: [], score: 0, totalScore: 0, isHost: true } : null;
-    const sessionPlayers = x.creationContext === 'session' ? (x.players || []).map(p => ({ id: p.sessionPlayerId, sessionPlayerId: p.sessionPlayerId, name: String(p.name).slice(0, 24), avatar: p.avatar ?? '🎲', word: '', wordTiles: [], score: 0, totalScore: 0 })) : [];
+    const sessionPlayers = x.creationContext === 'session' ? (x.players || []).map(p => ({ id: p.sessionPlayerId, sessionPlayerId: p.sessionPlayerId, name: String(p.name).slice(0, 24), avatar: sessionAvatar(p.avatar), word: '', wordTiles: [], score: 0, totalScore: 0 })) : [];
     this.data = { ...this.data, code: x.code || this.data.code, creationContext: ['host', 'session'].includes(x.creationContext) ? x.creationContext : 'tv', sessionMode: x.creationContext === 'session', sessionId: x.sessionId || null, sessionCode: x.sessionCode || null, launchId: x.launchId || null, phase: 'lobby', mode: x.mode === 'competition' ? 'competition' : 'single', round: 1, totalRounds: x.mode === 'competition' ? 5 : 1, ownerId: hostPlayer?.id || null, players: hostPlayer ? [hostPlayer] : sessionPlayers, pool: pool(), gestures: {}, endAt: 0, finalCloseAt: 0, lastActivity: Date.now(), seq: 0, message: 'Waiting for players', controlToken: x.controlToken || this.data.controlToken || '' };
     await this.save();
     await this.state.storage.setAlarm(this.nextAlarm());
