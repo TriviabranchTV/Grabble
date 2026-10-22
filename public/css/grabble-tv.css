@@ -1214,3 +1214,10 @@ body:has(.shell-tv) #app{height:100dvh;max-height:100dvh;overflow:hidden}
 .grabble-session-actions{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
 .grabble-session-actions button{min-height:50px;padding:12px 22px}
 @media(max-width:640px){.grabble-session-flow{padding:14px}.grabble-session-head,.grabble-session-card{width:100%}.grabble-session-head img{width:190px}.grabble-session-card{padding:22px 18px}.grabble-format-options{gap:9px}.grabble-format-options button{min-height:82px;padding:13px}.grabble-session-actions{flex-direction:column-reverse}.grabble-session-actions button{width:100%}}
+
+
+#surface-content:has(.grabble-session-flow){flex:1;min-height:0;display:flex}
+.grabble-session-flow{flex:1;min-height:0;place-content:center}
+.grabble-session-head img{display:none}
+.grabble-session-head{min-height:30px}
+@media(max-height:650px){.grabble-session-card{padding:18px 24px}.grabble-session-card h1{font-size:clamp(1.8rem,4vw,3rem)}.grabble-session-players{margin:12px 0 18px}.grabble-format-options{margin:14px 0}.grabble-session-actions{margin-top:14px}}
