@@ -1192,3 +1192,25 @@ body:has(.shell-tv) #app{height:100dvh;max-height:100dvh;overflow:hidden}
 .shell-tv .corner .live-word{width:100%!important;min-width:0!important;max-width:100%!important;flex-wrap:nowrap!important;align-self:stretch!important;overflow:hidden!important;gap:clamp(2px,.35vw,6px)!important}
 .shell-tv .corner:nth-child(2) .live-word,.shell-tv .corner:nth-child(4) .live-word{justify-content:flex-end!important}
 .shell-tv .corner .live-letter-tile{width:var(--tile-size,clamp(30px,3.2vw,52px))!important;height:var(--tile-size,clamp(30px,3.2vw,52px))!important;min-width:0!important;min-height:0!important;flex:0 0 var(--tile-size,clamp(30px,3.2vw,52px))!important;font-size:calc(var(--tile-size,40px)*.46)!important;border-radius:clamp(4px,.6vw,10px)!important}
+
+
+/* TBTV session flow: separate lobby and game setup pages */
+.grabble-session-flow{min-height:100dvh;display:grid;place-content:center;gap:clamp(16px,3vh,30px);padding:clamp(18px,4vw,52px);background:radial-gradient(ellipse at 50% 0%,#c86a4e 0%,#9b4437 54%,#71332f 100%);color:var(--bone)}
+.grabble-session-head{display:flex;align-items:center;justify-content:space-between;gap:18px;width:min(1040px,92vw);margin:0 auto}
+.grabble-session-head img{width:min(250px,40vw);max-height:72px;object-fit:contain}
+.grabble-session-head span,.grabble-session-card>.eyebrow{font-size:.74rem;font-weight:900;letter-spacing:.17em}
+.grabble-session-card{width:min(1040px,92vw);margin:0 auto;padding:clamp(22px,4vw,46px);border:1px solid #fff5;border-radius:26px;background:#291d1dde;box-shadow:0 24px 70px #170b0a66}
+.grabble-session-card h1{margin:.35em 0 .45em;font-size:clamp(2.2rem,5.8vw,4.8rem);line-height:.98;letter-spacing:-.04em}
+.grabble-session-card>p:not(.eyebrow){color:#ffe6d3}
+.grabble-session-players{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 28px}
+.grabble-session-player{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #fff4;border-radius:999px;background:#fff1;color:var(--bone)}
+.grabble-format-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:24px 0;padding:0;border:0}
+.grabble-format-options legend{margin-bottom:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.grabble-format-options button{display:grid;gap:6px;min-height:100px;padding:18px;border:2px solid #fff4;border-radius:18px;background:#fff1;color:var(--bone);text-align:left}
+.grabble-format-options button[aria-pressed="true"]{border-color:var(--peach);background:#ff7a3d33}
+.grabble-format-options button strong{font-size:1.2rem}
+.grabble-format-options button small{color:#ffe1d0}
+.grabble-session-rules{font-size:1.05rem}
+.grabble-session-actions{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
+.grabble-session-actions button{min-height:50px;padding:12px 22px}
+@media(max-width:640px){.grabble-session-flow{padding:14px}.grabble-session-head,.grabble-session-card{width:100%}.grabble-session-head img{width:190px}.grabble-session-card{padding:22px 18px}.grabble-format-options{gap:9px}.grabble-format-options button{min-height:82px;padding:13px}.grabble-session-actions{flex-direction:column-reverse}.grabble-session-actions button{width:100%}}
