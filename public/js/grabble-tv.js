@@ -10,7 +10,10 @@
     return '<span class="player-avatar-inline" aria-hidden="true">' + s.esc(label) + '</span>';
   };
   s.configureCreate();
-  document.getElementById("tv-back")?.addEventListener("click", () => {
+  const tvBackButton=document.getElementById("tv-back");
+  if(tvBackButton&&s.sessionCode)tvBackButton.hidden=true;
+  tvBackButton?.addEventListener("click", () => {
+    if(activeState?.sessionMode)return;
     s.setLeaving();
     location.href = "https://tv.triviabranch.com";
   });
@@ -59,6 +62,7 @@
   };
   const render = (state) => {
     activeState = state;
+    if(tvBackButton)tvBackButton.hidden=Boolean(state.sessionMode);
     if (state.phase === "lobby") { s.shell(state.sessionMode && state.lobbyStep === "settings" ? sessionSetup(state) : lobby(state)); qr(); bind(state); document.querySelector("[data-action=continue-players]")?.addEventListener("click",()=>window.GrabbleTransport.send({type:"continue-players"}),{once:true}); return; }
     if (state.phase === "countdown" || state.phase === "running" || state.phase === "scoring") {
       s.shell(state.phase === "scoring" ? '<div class="display-stage scoring-stage"><section class="display-pool result-pool"><div class="display-pool-title">Letter cache</div></section><div class="scoring-screen"><div><p class="eyebrow">TIME’S UP</p><h1>Scoring…</h1></div></div></div>' : live(state));
