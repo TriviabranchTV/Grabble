@@ -25,9 +25,12 @@ await room.init(new Request('https://room/init', {
 }));
 const afterInit = writes;
 const afterInitAlarms = alarmWrites;
-room.clients.set('player', { send() {} });
+const playerMessages = [], tvMessages = [];
+room.clients.set('player', { send(message) { playerMessages.push(JSON.parse(message)); } });
+room.clients.set('tv', { send(message) { tvMessages.push(JSON.parse(message)); } });
 room.data.players = [{ id: 'player', name: 'Ash', word: '', wordTiles: [], score: 0, totalScore: 0 }];
 room.data.ownerId = 'player';
+room.clientPlayers.set('player', 'player');
 
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
 assert.equal(writes, afterInit, 'snapshots used for transport must not write storage');
@@ -39,6 +42,16 @@ room.data.endAt = 0;
 
 await room.start();
 assert.equal(writes, afterInit + 1, 'a meaningful lifecycle transition must persist once');
+
+room.data.phase = 'running';
+room.data.endAt = Date.now() + 10000;
+playerMessages.length = 0;
+tvMessages.length = 0;
+await room.expireIfNeeded();
+assert.equal(tvMessages.length, 0, 'checking a running timer must not broadcast redundant timer updates');
+await room.action('player', 'play', JSON.stringify({ type: 'pointer', tokenId: 'tile-1' }));
+assert.equal(tvMessages.length, 0, 'pointer telemetry must not fan out to other clients');
+assert.ok(playerMessages.some(message => message.type === 'ack' && message.action === 'pointer'), 'legacy pointer telemetry still receives an acknowledgement');
 
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
 assert.equal(writes, afterInit + 1, 'repeated transport snapshots must remain write-free');
