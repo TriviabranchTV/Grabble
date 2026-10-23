@@ -1,9 +1,9 @@
+import assert from 'node:assert/strict';
+import { GrabbleRoom } from '../../src/room.js';
+
 const transientRoom = new GrabbleRoom({ storage: { async get() { return { code: 'STALE', phase: 'running' }; }, async getAlarm() { return null; } } }, {});
 await transientRoom.ensureLoaded();
 assert.equal(transientRoom.data.code, '', 'a restarted transient room must not restore a snapshot');
-
-import assert from 'node:assert/strict';
-import { GrabbleRoom } from '../../src/room.js';
 
 let writes = 0;
 let alarmWrites = 0;
