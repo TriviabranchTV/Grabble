@@ -2,7 +2,6 @@
   let api = {},
     drag = null,
     ghost = null,
-    lastPointerSent = 0;
   const send = (...args) => api.send(...args);
   function bind() {
     const state = api.getState?.();
@@ -38,7 +37,6 @@
     };
     const finish = (e) => {
       if (!drag) return;
-      send({ type: "pointerEnd", tokenId: drag.id });
       const d = drag,
         hit = document.elementFromPoint(e.clientX, e.clientY),
         board = document.getElementById("wordline"),
@@ -73,7 +71,6 @@
         el.classList.add("dragging");
         el.setPointerCapture?.(e.pointerId);
         send({ type: "reserve", tokenId: drag.id });
-        send({ type: "pointer", tokenId: drag.id });
         ghost = el.cloneNode(true);
         ghost.style.position = "fixed";
         ghost.style.pointerEvents = "none";
@@ -88,15 +85,10 @@
       e.preventDefault();
       ghost.style.left = e.clientX + "px";
       ghost.style.top = e.clientY + "px";
-      if (Date.now() - lastPointerSent >= 250) {
-        send({ type: "pointer", tokenId: drag.id });
-        lastPointerSent = Date.now();
-      }
     };
     window.onpointerup = finish;
     window.onpointercancel = () => {
       if (drag) {
-        send({ type: "pointerEnd", tokenId: drag.id });
         send({ type: "cancel", tokenId: drag.id });
         drag.el.classList.remove("dragging");
         ghost?.remove();
