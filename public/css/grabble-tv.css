@@ -1221,3 +1221,14 @@ body:has(.shell-tv) #app{height:100dvh;max-height:100dvh;overflow:hidden}
 .grabble-session-head img{display:none}
 .grabble-session-head{min-height:30px}
 @media(max-height:650px){.grabble-session-card{padding:18px 24px}.grabble-session-card h1{font-size:clamp(1.8rem,4vw,3rem)}.grabble-session-players{margin:12px 0 18px}.grabble-format-options{margin:14px 0}.grabble-session-actions{margin-top:14px}}
+
+/* Compact TBTV screens with the wordmark as the product identity. */
+.grabble-session-flow{box-sizing:border-box;height:100dvh;min-height:0;padding:calc(env(safe-area-inset-top,0px) + 14px) max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 14px) max(14px,env(safe-area-inset-left,0px));overflow:auto}
+.grabble-session-head{justify-content:center;min-height:0}
+.grabble-session-head img{display:block;width:min(280px,56vw);max-height:64px}
+.grabble-session-card{box-sizing:border-box;width:min(920px,100%)}
+.grabble-session-card h1{margin:.15em 0 .3em}
+.grabble-session-players{justify-content:center;margin:16px 0 22px}
+.grabble-format-options{margin:12px 0}.grabble-format-options legend{margin-bottom:8px}
+.grabble-session-actions{margin-top:14px}
+@media(max-width:640px){.grabble-session-card{padding:18px 14px}.grabble-session-head img{width:min(220px,60vw)}.grabble-format-options{gap:8px}.grabble-format-options button{min-height:68px;padding:10px}.grabble-session-actions{flex-direction:row}.grabble-session-actions button{width:auto;flex:1}}
