@@ -8,6 +8,7 @@ function roomState() {
     async get(key) { return values.get(key); },
     async put(key, value) { values.set(key, structuredClone(value)); },
     async deleteAlarm() {},
+    async getAlarm() { return null; },
     async setAlarm() {},
   } };
 }
