@@ -9,7 +9,7 @@ const transport = await read('public/js/grabble-transport.js');
 const player = await read('public/js/grabble-play.js');
 const tv = await read('public/js/grabble-tv.js');
 
-assert.equal(capabilities.contractVersion, '1.52');
+assert.equal(capabilities.contractVersion, '1.53');
 assert.equal(capabilities.gameId, 'grabble');
 assert.equal(capabilities.handoff.protocol, 'tbtv-session-v1');
 assert.equal(capabilities.handoff.launchRetryIsIdempotent, true);
