@@ -1,7 +1,7 @@
 (function () {
   let api = {},
     drag = null,
-    ghost = null,
+    ghost = null;
   const send = (...args) => api.send(...args);
   function bind() {
     const state = api.getState?.();
