@@ -58,7 +58,7 @@
   const style=document.createElement("style");
   style.textContent=":focus-visible{outline:3px solid #fff;outline-offset:4px;box-shadow:0 0 0 5px #e4cd7955!important}";
   document.head.appendChild(style);
-  let quitEnabled = false;
+  let quitEnabled = false, quitPrompted = false;
   function ensureQuitControls() {
     if (document.getElementById("tbtv-quit-control")) return;
     const button = document.createElement("button");
@@ -94,6 +94,13 @@
     if (!quitEnabled) {
       const dialog = document.getElementById("tbtv-quit-confirmation");
       if (dialog) dialog.hidden = true;
+    } else if (!quitPrompted && new URLSearchParams(location.search).get("quit") === "confirm") {
+      quitPrompted = true;
+      const dialog = document.getElementById("tbtv-quit-confirmation");
+      if (dialog) {
+        dialog.hidden = false;
+        dialog.querySelector("[data-quit-cancel]")?.focus({preventScroll:true});
+      }
     }
   }
   window.TBTVRemoteNavigation = { setQuitEnabled };
