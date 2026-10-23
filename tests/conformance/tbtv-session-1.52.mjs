@@ -92,7 +92,7 @@ try {
   room.clients.set('tv-client', { send: value => sent.push(JSON.parse(value)), close() {} });
   room.roles.set('tv-client', 'tv');
   await room.action('tv-client', 'tv', JSON.stringify({ v: 1, type: 'action', payload: { type: 'returnToSession' } }));
-  assert.deepEqual(returnBody, { sessionId: 'session-abc', gameId: 'grabble', launchId: 'launch-123', roomCode: result.roomCode });
+  assert.deepEqual(returnBody, { sessionId: 'session-abc', sessionCode: 'ABCD', gameId: 'grabble', launchId: 'launch-123', roomCode: result.roomCode });
   assert.ok(sent.some(message => message.type === 'return_to_session'));
   assert.equal(room.data.phase, 'closed');
 } finally { globalThis.fetch = previousFetch; }
