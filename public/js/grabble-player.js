@@ -88,7 +88,7 @@
       e.preventDefault();
       ghost.style.left = e.clientX + "px";
       ghost.style.top = e.clientY + "px";
-      if (Date.now() - lastPointerSent > 90) {
+      if (Date.now() - lastPointerSent >= 250) {
         send({ type: "pointer", tokenId: drag.id });
         lastPointerSent = Date.now();
       }
