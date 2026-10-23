@@ -62,6 +62,7 @@
   };
   const render = (state) => {
     activeState = state;
+    window.TBTVRemoteNavigation?.setQuitEnabled(Boolean(state.sessionMode));
     if(tvBackButton)tvBackButton.hidden=Boolean(state.sessionMode);
     if (state.phase === "lobby") { s.shell(state.sessionMode && state.lobbyStep === "settings" ? sessionSetup(state) : lobby(state)); qr(); bind(state); document.querySelector("[data-action=continue-players]")?.addEventListener("click",()=>window.GrabbleTransport.send({type:"continue-players"}),{once:true}); return; }
     if (state.phase === "countdown" || state.phase === "running" || state.phase === "scoring") {
@@ -78,6 +79,7 @@
     document.getElementById("tv-home")?.addEventListener("click", () => location.href="https://tv.triviabranch.com", {once:true});
     document.getElementById("return-session")?.addEventListener("click", () => window.GrabbleTransport.send({type:"returnToSession"}), {once:true});
   };
+  window.addEventListener("tbtv:quit-confirmed",()=>{if(activeState?.sessionMode)window.GrabbleTransport.send({type:"returnToSession"})});
   const enter = () => {
     s.onEvent = event => { if (event.type === "return_to_session" && s.sessionCode) location.href = "https://tv.triviabranch.com/tv/" + encodeURIComponent(s.sessionCode) + "?return=select"; };
     if (!s.code) window.GrabbleCreate.tvHome();
