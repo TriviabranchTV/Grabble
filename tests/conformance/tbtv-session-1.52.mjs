@@ -96,4 +96,4 @@ try {
   assert.ok(sent.some(message => message.type === 'return_to_session'));
   assert.equal(room.data.phase, 'closed');
 } finally { globalThis.fetch = previousFetch; }
-console.log('TBTV 1.52 handoff, idempotent launch, stable roster, and session return tests passed');
+console.log('TBTV 1.53 handoff, idempotent launch, stable roster, and session return tests passed');
