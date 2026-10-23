@@ -51,7 +51,7 @@ await room.expireIfNeeded();
 assert.equal(tvMessages.length, 0, 'checking a running timer must not broadcast redundant timer updates');
 await room.action('player', 'play', JSON.stringify({ type: 'pointer', tokenId: 'tile-1' }));
 assert.equal(tvMessages.length, 0, 'pointer telemetry must not fan out to other clients');
-assert.ok(playerMessages.some(message => message.type === 'ack' && message.action === 'pointer'), 'legacy pointer telemetry still receives an acknowledgement');
+assert.ok(playerMessages.some(message => message.type === 'ack' && message.payload?.action === 'pointer'), 'legacy pointer telemetry still receives an acknowledgement');
 
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
 assert.equal(writes, afterInit + 1, 'repeated transport snapshots must remain write-free');
