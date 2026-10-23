@@ -1,7 +1,8 @@
 (function () {
   let api = {},
     drag = null,
-    ghost = null;
+    ghost = null,
+    lastPointerSent = 0;
   const send = (...args) => api.send(...args);
   function bind() {
     const state = api.getState?.();
@@ -35,7 +36,6 @@
       };
       input.focus();
     };
-    let lastPointerSent = 0;
     const finish = (e) => {
       if (!drag) return;
       send({ type: "pointerEnd", tokenId: drag.id });
