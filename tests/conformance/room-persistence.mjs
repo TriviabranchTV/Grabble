@@ -1,3 +1,7 @@
+const transientRoom = new GrabbleRoom({ storage: { async get() { return { code: 'STALE', phase: 'running' }; }, async getAlarm() { return null; } } }, {});
+await transientRoom.ensureLoaded();
+assert.equal(transientRoom.data.code, '', 'a restarted transient room must not restore a stale snapshot');
+
 import assert from 'node:assert/strict';
 import { GrabbleRoom } from '../../src/room.js';
 
@@ -33,7 +37,7 @@ room.data.ownerId = 'player';
 room.clientPlayers.set('player', 'player');
 
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
-assert.equal(writes, afterInit, 'snapshots used for transport must not write storage');
+assert.equal(writes, afterInit, 'transient snapshots must not write room state storage');
 for (let i = 0; i < 100; i++) await room.activity(false);
 assert.equal(alarmWrites, afterInitAlarms, 'frequent transport activity must not refresh the inactivity alarm on every message');
 room.data.endAt = Date.now() + 30000;
@@ -41,7 +45,7 @@ assert.equal(room.nextAlarm(), room.data.endAt, 'round timers schedule one deadl
 room.data.endAt = 0;
 
 await room.start();
-assert.equal(writes, afterInit + 1, 'a meaningful lifecycle transition must persist once');
+assert.equal(writes, afterInit, 'transient room state must not write a full snapshot');
 
 room.data.phase = 'running';
 room.data.endAt = Date.now() + 10000;
@@ -54,7 +58,7 @@ assert.equal(tvMessages.length, 0, 'pointer telemetry must not fan out to other 
 assert.ok(playerMessages.some(message => message.type === 'ack' && message.payload?.action === 'pointer'), 'legacy pointer telemetry still receives an acknowledgement');
 
 for (let i = 0; i < 25; i++) await room.broadcastSnapshot(false);
-assert.equal(writes, afterInit + 1, 'repeated transport snapshots must remain write-free');
+assert.equal(writes, afterInit, 'repeated transient snapshots must remain write-free');
 
 console.log('Grabble bounded-write room-flow checks passed');
 
