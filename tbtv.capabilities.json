@@ -1,6 +1,6 @@
 {
   "gameId": "grabble",
-  "contractVersion": "1.52",
+  "contractVersion": "1.53",
   "handoff": {
     "protocol": "tbtv-session-v1",
     "startEndpoint": "/api/tbtv/session/start",
