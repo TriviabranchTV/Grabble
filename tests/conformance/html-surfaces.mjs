@@ -23,7 +23,7 @@ for (const surface of surfaces) {
   assert.match(source, /id="surface-content"/, file + ' must provide its own page content mount');
   assert.match(source, new RegExp('href="/css/grabble-base\\.css"'), file + ' must load shared primitives');
   assert.match(source, new RegExp('href="/css/grabble-' + surface + '\\.css(?:\\?[^"]*)?"'), file + ' must load its own stylesheet');
-  const stylesheets = [...source.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(match => match[1].replace(/\\?.*$/, '')).sort();
+  const stylesheets = [...source.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(match => match[1].replace(/\?.*$/, '')).sort();
   assert.deepEqual(stylesheets, ['/css/grabble-' + surface + '.css', '/css/grabble-base.css'].sort(), file + ' must load only its surface stylesheet and shared primitives');
   await access(path.join(root, 'public/css/grabble-' + surface + '.css'));
   assert.match(source, new RegExp('src="/js/' + controllers[surface] + '([^"]*)?"'), file + ' must load its own controller');
