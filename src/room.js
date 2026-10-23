@@ -71,7 +71,7 @@ export class GrabbleRoom {
   async action(clientId, role, raw) { let message; try { message = JSON.parse(raw); } catch { return this.error(this.clients.get(clientId), 'MALFORMED_MESSAGE', 'Message must be valid JSON'); } const requestId = message?.requestId; if (message?.v === 1 && message.type === 'action') message = message.payload || {}; if (!message?.type) return this.error(this.clients.get(clientId), 'INVALID_ACTION', 'Action type is required', requestId); await this.expireIfNeeded(); await this.activity(false); const owner = role === 'host' || role === 'tv' || (!this.data.sessionMode && role === 'play' && (clientId === this.data.ownerId || this.data.players.length === 1));
     if (role === 'tv' && this.data.sessionMode && ['returnToSession', 'return'].includes(message.type)) {
       try {
-        const response = await fetch('https://tv.triviabranch.com/api/tbtv/session/return', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: this.data.sessionId, gameId: 'grabble', launchId: this.data.launchId, roomCode: this.data.code }) });
+        const response = await fetch('https://tv.triviabranch.com/api/tbtv/session/return', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: this.data.sessionId, sessionCode: this.data.sessionCode, gameId: 'grabble', launchId: this.data.launchId, roomCode: this.data.code }) });
         if (!response.ok) throw new Error('Core did not accept the session return.');
         this.data.phase = 'returning'; this.data.endAt = 0; this.data.message = 'Returning to games night';
         this.event('return_to_session', { sessionCode: this.data.sessionCode });
