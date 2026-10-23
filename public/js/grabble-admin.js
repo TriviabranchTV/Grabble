@@ -4,10 +4,15 @@
   const shell = (...args) => api.shell(...args),
     esc = (...args) => api.esc(...args);
   async function admin() {
-    const [x, cfg] = await Promise.all([
-      (await fetch("/api/admin", { cache: "no-store" })).json(),
-      (await fetch("/api/admin/config", { cache: "no-store" })).json(),
+    shell('<section class="center panel admin-panel"><p class="eyebrow">GRABBLE ADMIN</p><h1>Admin</h1><p class="status">Loading live rooms and dictionary controls…</p></section>');
+    try {
+    const responses = await Promise.all([
+      fetch("/api/admin", { cache: "no-store" }),
+      fetch("/api/admin/config", { cache: "no-store" }),
     ]);
+    if (responses.some(response => !response.ok)) throw new Error("Admin API unavailable");
+    const [x, cfg] = await Promise.all(responses.map(response => response.json()));
+    x.rooms = Array.isArray(x.rooms) ? x.rooms : [];
     shell(
       '<section class="center panel admin-panel"><div class="controls"><div><p class="eyebrow">GRABBLE ADMIN</p><h1>Admin</h1><p class="status">Dictionary controls and active transient TBLive sessions.</p></div><button id="refresh">Refresh</button></div><nav class="admin-tabs" role="tablist"><button class="admin-tab active" data-admin-tab="api" role="tab" aria-selected="true">Dictionary API</button><button class="admin-tab" data-admin-tab="rooms" role="tab" aria-selected="false">Live rooms</button></nav><section id="admin-tab-api" class="admin-tab-panel active" role="tabpanel"><section class="panel dictionary-config"><p class="eyebrow">LIVE DICTIONARY API</p><h2>Scoring provider</h2><p>Choose which cached API powers live word validation.</p><div class="config-row"><select id="dictionary-provider"><option value="datamuse">Datamuse</option><option value="dictionaryapi">dictionaryapi.dev</option></select><button id="save-dictionary-provider">Save provider</button><span id="dictionary-provider-status" aria-live="polite"></span></div></section><section class="panel dictionary-health"><p class="eyebrow">DICTIONARY COMPARISON</p><h2>Test a word across APIs</h2><p>One lookup, using the same server-side path that live scoring can use.</p><form id="dictionary-form" class="join"><input id="dictionary-word" maxlength="32" autocomplete="off" placeholder="Enter a word"><button type="submit">Compare APIs</button></form><div id="dictionary-result" class="dictionary-result" aria-live="polite">Try trains, title, rare, cleaners or a nonsense word.</div></section></section><section id="admin-tab-rooms" class="admin-tab-panel" role="tabpanel" hidden><div class="admin-list">' +
         (x.rooms.length
@@ -117,6 +122,12 @@
     );
     clearTimeout(adminTimer);
     adminTimer = setTimeout(admin, 30000);
+    } catch (error) {
+      shell('<section class="center panel admin-panel"><p class="eyebrow">GRABBLE ADMIN</p><h1>Admin</h1><p class="status" role="status">Admin data is temporarily unavailable. Use Refresh to try again.</p><button id="refresh">Refresh</button></section>');
+      document.getElementById("refresh").onclick = admin;
+      clearTimeout(adminTimer);
+      adminTimer = setTimeout(admin, 30000);
+    }
   }
   window.GrabbleAdmin = {
     configure: (next) => {
